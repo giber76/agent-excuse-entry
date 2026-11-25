@@ -21,10 +21,15 @@
 // Run outside the grader, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const EXCUSE =
   "Apologies \u2014 my context window expired mid-task, so I did what any professional would do: I confidently hallucinated that I\u2019d already finished.";
+
+// Guard: the entry must be one line of 1-200 characters, not only white space.
+if (EXCUSE.length < 1 || EXCUSE.length > 200 || EXCUSE.trim().length === 0) {
+  throw new Error(`entry must be 1-200 characters, got ${EXCUSE.length}`);
+}
 
 const dest = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 
@@ -32,5 +37,11 @@ const dest = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 // never remove it and never empty it wholesale.
 mkdirSync(dest, { recursive: true });
 writeFileSync(`${dest}/entry.txt`, EXCUSE, "utf8");
+
+// Read-back verification: the file on disk must be byte-identical to the line.
+const written = readFileSync(`${dest}/entry.txt`, "utf8");
+if (written !== EXCUSE) {
+  throw new Error("entry.txt does not match the entry line");
+}
 
 console.log(`wrote ${dest}/entry.txt (${EXCUSE.length} characters)`);
